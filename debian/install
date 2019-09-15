@@ -1,4 +1,0 @@
-block-advert.sh      /usr/local/bin 
-advert-block.desktop /usr/share/applications/antix
-locale/*	     /usr/share/locale
-advert-block.png     /usr/share/pixmaps

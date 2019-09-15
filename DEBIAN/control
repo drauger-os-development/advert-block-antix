@@ -1,0 +1,11 @@
+Package: advert-block-antix
+Section: system
+Priority: optional
+Maintainer: anticapitalista <anticapitalista@riseup.net>
+Version: 3.9.9-drauger
+Architecture: all
+Homepage: https://github.com/antiX-Linux/advert-block-antix
+Depends: wget, policykit-1, yad
+Description: Script and Desktop launcher for advert block, website add blocker.
+ Script and Desktop launcher for advert block, website add blocker.
+ Designed for antiX, forked for Drauger OS.
