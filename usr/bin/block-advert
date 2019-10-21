@@ -6,14 +6,20 @@
 # zenity version by lagopus for antiX, Decemder 2010
 # modified to yad by Dave for antiX, September 2011
 # fix update URL to mvps
+# changed to python files for each specific window, using python-gtk, by Thomas Castleman for Drauger OS, October 2019
+# security and performance improvments by Thomas Castleman for Drauger OS, October 2019
 
 # advert blocker
 # downloads a list of known advert servers
 # then appends them to /etc/hosts so that
 # many online adverts are blocked from sight
 
+if [ "$EUID" != "0" ]; then
+	/usr/bin/pkexec /usr/bin/block-advert
+	exit $?
+fi
 TEXTDOMAINDIR=/usr/share/locale
-TEXTDOMAIN=block-advert.sh
+TEXTDOMAIN=block-advert
 
 export title="antiX Advert Blocker"
 
@@ -21,13 +27,13 @@ export title="antiX Advert Blocker"
 export markerstart='# antiX-advert-blocker IPs below'
 export markerend='# antiX-advert-blocker IPs above'
 
-info_text=$"The <b>$title</b> tool adds stuff to your /etc/hosts file, so \n\
-that many advertising servers and websites will not be able to connect \n\
-to this PC.\n\n\
-You can choose one service or combine multiple services for more advert protection.\n\
-Blocking ad servers protects your privacy, saves you bandwidth, greatly \n\
-improves web-browsing speed and makes the internet much less annoying in general.\n\n\
-Do you want to proceed?"
+#info_text=$"The <b>$title</b> tool adds stuff to your /etc/hosts file, so \n\
+#that many advertising servers and websites will not be able to connect \n\
+#to this PC.\n\n\
+#You can choose one service or combine multiple services for more advert protection.\n\
+#Blocking ad servers protects your privacy, saves you bandwidth, greatly \n\
+#improves web-browsing speed and makes the internet much less annoying in general.\n\n\
+#Do you want to proceed?"
 
 # width of progress dialogs
 WIDTH=360
@@ -36,7 +42,7 @@ WIDTH=360
 function cleanup
 {
     # remove all temp files
-    rm -f /tmp/adlist{1,2,3,4} /tmp/adlist-all /tmp/hosts-temp
+    /bin/rm -f /tmp/adlist{1,2,3,4} /tmp/adlist-all /tmp/hosts-temp
 }
 
 # concatenate the downloaded files
@@ -48,14 +54,7 @@ function build_adlist_all
     # remove double spaces, remove lines not beginning by a number,
     # suppress \r at end of line
     # then sort unique by field 2 (url)
-    cat /tmp/adlist{1,2,3,4} | sed '/^#/d' | \
-                               sed '/^$/d' | \
-                               sed 's/[\t]/ /g' | \
-                               sed 's/  / /g' | \
-                               sed -n '/^[0-9]/p' | \
-                               tr -d '\015' | \
-                               sort -u -k 2 \
-                               > /tmp/adlist-all
+    /bin/cat /tmp/adlist{1,2,3,4} | /bin/sed '/^#/d' | /bin/sed '/^$/d' | /bin/sed 's/[\t]/ /g' | /bin/sed 's/  / /g' | /bin/sed -n '/^[0-9]/p' | /usr/bin/tr -d '\015' | /usr/bin/sort -u -k 2 > /tmp/adlist-all
     #echo "====================YTO"
 }
 
@@ -64,19 +63,19 @@ function build_adlist_all
 function append_adlist
 {
 	# copy /etc/hosts, but the stuff between the markers, to a temp hosts file
-	sed -e "/$markerstart/,/$markerend/d" /etc/hosts > /tmp/hosts-temp
+	/bin/sed -e "/$markerstart/,/$markerend/d" /etc/hosts > /tmp/hosts-temp
 	# remove the markers
-	sed -i -e "/$markerstart/d" /tmp/hosts-temp
-	sed -i -e "/$markerend/d"   /tmp/hosts-temp
+	/bin/sed -i -e "/$markerstart/d" /tmp/hosts-temp
+	/bin/sed -i -e "/$markerend/d"   /tmp/hosts-temp
 
 	# check the size of the final adlist - if UNBLOCK is chosen, it will be 0.
-    size=$(stat -c%s /tmp/adlist-all 2>/dev/null)
+    size=$(/usr/bin/stat -c%s /tmp/adlist-all 2>/dev/null)
     #echo $size
 	if [ -n "$size" ] && [ "$size" -gt "0" ];then
 		# add list contents into the hosts file, below a marker (for easier removal)
-		echo "$markerstart" >> /tmp/hosts-temp
-		cat /tmp/adlist-all >> /tmp/hosts-temp
-		echo "$markerend"   >> /tmp/hosts-temp
+		builtin echo "$markerstart" >> /tmp/hosts-temp
+		/bin/cat /tmp/adlist-all >> /tmp/hosts-temp
+		builtin echo "$markerend"   >> /tmp/hosts-temp
 	else
 		yad --image="info" --title "$title" --text=$"Restoring original /etc/hosts."
         exit 1
@@ -84,12 +83,12 @@ function append_adlist
     # On first use backup original /etc/hosts to /etc/hosts.ORIGINAL
     # If /etc/hosts.original exists, then backup to /etc/hosts.saved
     if [ -f /etc/hosts.ORIGINAL ]; then
-    cp "/etc/hosts" "/etc/hosts.saved"
-    mv "/tmp/hosts-temp" "/etc/hosts"
+		/bin/cp "/etc/hosts" "/etc/hosts.saved"
+		/bin/mv "/tmp/hosts-temp" "/etc/hosts"
     else
-    cp "/etc/hosts" "/etc/hosts.ORIGINAL"
-    cp "/etc/hosts" "/etc/hosts.saved"
-    mv "/tmp/hosts-temp" "/etc/hosts"
+		/bin/cp "/etc/hosts" "/etc/hosts.ORIGINAL"
+		/bin/cp "/etc/hosts" "/etc/hosts.saved"
+		/bin/mv "/tmp/hosts-temp" "/etc/hosts"
     fi
 }
 
@@ -102,7 +101,7 @@ function wget_dialog
     #echo "url: [$1]"
     url=$1
     # extract domain name between // and /
-    domain=$(echo "$url" | cut -d/ -f3)
+    domain=$(builtin echo "$url" | cut -d/ -f3)
     #echo "===> $domain"
 
     # '--progress=dot' prints dots and a percentage at the end of the line
@@ -111,12 +110,7 @@ function wget_dialog
     # sed to delete the ending '%' sign
     # sed -u to flush the output of sed
     # changed -t 0 (tries) to -t 20
-    wget -c -4 -t 20 -T 10 --progress=dot -O $2 "$1" 2>&1 | \
-        awk '{print $7}; system("")' | sed -u 's/%//' | \
-        yad --title "$title" --progress --width $WIDTH \
-               --text=$"Loading  adlist from $domain" \
-               --percentage=0 \
-               --auto-close
+    /usr/bin/wget -c -4 -t 20 -T 10 --progress=dot -O $2 "$1" 2>&1 | /usr/bin/awk '{print $7}; system("")' | /bin/sed -u 's/%//' | yad --title "$title" --progress --width $WIDTH --text=$"Loading  adlist from $domain" --percentage=0 --auto-close
 }
 
 # download the ads lists
@@ -126,8 +120,8 @@ function download_adlist
     if [ "$mvps" = true ]; then
         wget_dialog http://winhelp2002.mvps.org/hosts.txt /tmp/adlist1 # TP fix update URL
     fi
-    sed -i 's/0.0.0.0/127.0.0.1/' /tmp/adlist1 # TP fix to change 0.0.0.0 to 127.0.0.1 in mvps list
-    sed -i 's/ #.*$//' /tmp/adlist1 # TP fix to remove comments in mvps list
+    /bin/sed -i 's/0.0.0.0/127.0.0.1/' /tmp/adlist1 # TP fix to change 0.0.0.0 to 127.0.0.1 in mvps list
+    /bin/sed -i 's/ #.*$//' /tmp/adlist1 # TP fix to remove comments in mvps list
 
     # someonewhocares
     if [ "$someonewhocares" = true ]; then
@@ -146,26 +140,27 @@ function download_adlist
 
     # UNBLOCK
     if [ "$unblock" = true ]; then
-        mv -f "/etc/hosts.ORIGINAL" "/etc/hosts"
-        rm -f "/etc/hosts.saved"
+        /bin/mv -f "/etc/hosts.ORIGINAL" "/etc/hosts"
+        /bin/rm -f "/etc/hosts.saved"
     fi
 
     #100830 BK bug fix: create if not exist...
-    touch /tmp/adlist{1,2,3,4}
+    /usr/bin/touch /tmp/adlist{1,2,3,4}
 }
 
 
 function success
 {
 	# tell user
-	yad --image "info" --title "$title" --text=$"Success - your settings have been changed.\n\n\
-Your hosts file has been updated.\n\
-Restart your browser to see the changes."
+	#yad --image "info" --title "$title" --text=$"Success - your settings have been changed.\n\n\
+#Your hosts file has been updated.\n\
+#Restart your browser to see the changes."
+	/usr/share/advert-block/success.py
 }
 
 function error_report
 {
-	mkdir /tmp/advert-block-antix 2>/dev/null
+	/bin/mkdir /tmp/advert-block-antix 2>/dev/null
 	if [ "$3" == "download_adlist" ]; then
 		/usr/share/advert-block/error.py "downloading"
 	elif [ "$3" == "build_adlist_all" ] || [ "$2" == "append_adlist" ]; then
@@ -253,7 +248,7 @@ done
 
 if [ -z $selected ]; then
     # nothing selected
-    echo $"No item selected"
+    builtin echo "No item selected"
     exit 0
 fi
 

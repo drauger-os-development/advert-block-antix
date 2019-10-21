@@ -2,7 +2,7 @@ Package: advert-block-antix
 Section: system
 Priority: optional
 Maintainer: anticapitalista <anticapitalista@riseup.net>
-Version: 3.9.9-drauger
+Version: 4.0.0-drauger
 Architecture: all
 Homepage: https://github.com/antiX-Linux/advert-block-antix
 Depends: wget, policykit-1, yad

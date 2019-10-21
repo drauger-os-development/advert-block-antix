@@ -27,7 +27,7 @@ from gi.repository import Gtk, Gdk
 
 class splash(Gtk.Window):
 		def __init__(self):
-			Gtk.Window.__init__(self, title="antiX Advert Blockers")
+			Gtk.Window.__init__(self, title="antiX Advert Blocker")
 			self.grid=Gtk.Grid(orientation=Gtk.Orientation.VERTICAL,)
 			self.add(self.grid)
 
