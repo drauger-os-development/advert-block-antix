@@ -163,12 +163,34 @@ Your hosts file has been updated.\n\
 Restart your browser to see the changes."
 }
 
+function error_report
+{
+	mkdir /tmp/advert-block-antix 2>/dev/null
+	if [ "$3" == "download_adlist" ]; then
+		/usr/share/advert-block/error.py "downloading"
+	elif [ "$3" == "build_adlist_all" ] || [ "$2" == "append_adlist" ]; then
+		/usr/share/advert-block/error.py "editing"
+	elif [ "$3" == "cleanup" ]; then
+		/usr/share/advert-block/error.py "cleanup"
+	elif [ "$3" == "success" ]; then
+		/usr/share/advert-block/error.py "success"
+	fi
+	if [ "$2" == "0" ]; then
+		type="notice"
+	elif [ "$2" == "1" ]; then
+		type="warning"
+	elif [[ "$2" -ge 2 ]]; then
+		type="error"
+	fi
+	builtin echo -e "\nAn $type has occured in function $3\n\tCalled As: $1\n\tError Code: $2\n\tError Message: $4" >> /tmp/advert-block-antix/block-advert.log
+}
+
 #=======================================================================
 # main
 #
 
 # display message and ask to continue
-yad --title "$title" --width "$WIDTH" --image "question" --text "$info_text"
+#yad --title "$title" --width "$WIDTH" --image "question" --text "$info_text"
 confirm=$(/usr/share/advert-block/confirm.py 2>/dev/null)
 rsp=$?
 if [ $rsp != 1 ]; then
@@ -195,7 +217,7 @@ if [ $rsp != 1 ]; then
 elif [ "$ans" == "EXIT" ]; then
 	exit 1
 fi
-echo $ans
+#echo $ans
 
 # transform the list separated by ':' into arr
 arr=$(echo $ans | tr ":" "\n")
@@ -235,9 +257,10 @@ if [ -z $selected ]; then
     exit 0
 fi
 
-cleanup
-download_adlist
-build_adlist_all
-append_adlist
-cleanup
-success
+set -Ee
+cleanup || error_report "$0" "$?" "cleanup"
+download_adlist || error_report "$0" "$?" "download_adlist"
+build_adlist_all || error_report "$0" "$?" "build_adlist_all"
+append_adlist || error_report "$0" "$?" "append_adlist"
+cleanup || error_report "$0" "$?" "cleanup"
+success || error_report "$0" "$?" "success"
