@@ -68,7 +68,7 @@ function append_adlist
 	# remove the markers
 	sed -i -e "/$markerstart/d" /tmp/hosts-temp
 	sed -i -e "/$markerend/d"   /tmp/hosts-temp
-    
+
 	# check the size of the final adlist - if UNBLOCK is chosen, it will be 0.
     size=$(stat -c%s /tmp/adlist-all 2>/dev/null)
     #echo $size
@@ -104,7 +104,7 @@ function wget_dialog
     # extract domain name between // and /
     domain=$(echo "$url" | cut -d/ -f3)
     #echo "===> $domain"
-    
+
     # '--progress=dot' prints dots and a percentage at the end of the line
     # print $7 to cut the percentage
     # system("") to flush the output of awk in the pipe
@@ -124,7 +124,7 @@ function download_adlist
 {
     # mvps
     if [ "$mvps" = true ]; then
-        wget_dialog http://winhelp2002.mvps.org/hosts.txt /tmp/adlist1 # TP fix update URL 
+        wget_dialog http://winhelp2002.mvps.org/hosts.txt /tmp/adlist1 # TP fix update URL
     fi
     sed -i 's/0.0.0.0/127.0.0.1/' /tmp/adlist1 # TP fix to change 0.0.0.0 to 127.0.0.1 in mvps list
     sed -i 's/ #.*$//' /tmp/adlist1 # TP fix to remove comments in mvps list
@@ -138,7 +138,7 @@ function download_adlist
     if [ "$yoyo" = true ]; then
         wget_dialog 'http://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0&mimetype=plaintext' /tmp/adlist3
     fi
-     
+
     # adservers
     if [ "$adservers" = true ]; then
         wget_dialog http://hosts-file.net/ad_servers.asp /tmp/adlist4
@@ -146,18 +146,18 @@ function download_adlist
 
     # UNBLOCK
     if [ "$unblock" = true ]; then
-        mv -f "/etc/hosts.ORIGINAL" "/etc/hosts" 
+        mv -f "/etc/hosts.ORIGINAL" "/etc/hosts"
         rm -f "/etc/hosts.saved"
     fi
 
     #100830 BK bug fix: create if not exist...
-    touch /tmp/adlist{1,2,3,4} 
+    touch /tmp/adlist{1,2,3,4}
 }
 
 
 function success
 {
-	# tell user 
+	# tell user
 	yad --image "info" --title "$title" --text=$"Success - your settings have been changed.\n\n\
 Your hosts file has been updated.\n\
 Restart your browser to see the changes."
@@ -169,28 +169,37 @@ Restart your browser to see the changes."
 
 # display message and ask to continue
 yad --title "$title" --width "$WIDTH" --image "question" --text "$info_text"
+confirm=$(/usr/share/advert-block/confirm.py 2>/dev/null)
 rsp=$?
-
-if [ $rsp != 0 ]; then
-    exit 0
+if [ $rsp != 1 ]; then
+    exit 1
+elif [ "$confirm" == "EXIT" ]; then
+	exit 1
 fi
 
 # selection dialog
-ans=$(yad --title "$title" \
-             --width "$WIDTH" --height 220 \
-             --list --separator=":" \
-             --text $"Choose your preferred ad blocking service(s)" \
-             --checklist  --column "Pick" --column "Service"\
-             FALSE "mvps.org" \
-             FALSE "someonewhocares.org" \
-             FALSE "yoyo.org" \
-             FALSE "adservers.org" \
-             FALSE "UNBLOCK" )
-
-#echo $ans
+#ans=$(yad --title "$title" \
+             #--width "$WIDTH" --height 220 \
+             #--list --separator=":" \
+             #--text $"Choose your preferred ad blocking service(s)" \
+             #--checklist  --column "Pick" --column "Service"\
+             #FALSE "mvps.org" \
+             #FALSE "someonewhocares.org" \
+             #FALSE "yoyo.org" \
+             #FALSE "adservers.org" \
+             #FALSE "UNBLOCK" )
+ans=$(/usr/share/advert-block/selection.py 2>/dev/null)
+rsp=$?
+if [ $rsp != 1 ]; then
+    exit 1
+elif [ "$ans" == "EXIT" ]; then
+	exit 1
+fi
+echo $ans
 
 # transform the list separated by ':' into arr
 arr=$(echo $ans | tr ":" "\n")
+#echo $arr
 
 selected=""
 for x in $arr
@@ -217,7 +226,7 @@ do
         unblock='true'
         selected='yes'
         ;;
-    esac    
+    esac
 done
 
 if [ -z $selected ]; then
