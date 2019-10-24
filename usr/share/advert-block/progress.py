@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  restore.py
+#  progress.py
 #
 #  Copyright 2019 Thomas Castleman <contact@draugeros.org>
 #
@@ -21,10 +21,10 @@
 #  MA 02110-1301, USA.
 #
 #
-
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GLib
+from sys import argv
 
 class splash(Gtk.Window):
 		def __init__(self):
@@ -34,29 +34,30 @@ class splash(Gtk.Window):
 
 			self.label = Gtk.Label()
 			self.label.set_markup("""
-Restoring your original /etc/hosts file.
-	""")
-			self.label.set_justify(Gtk.Justification.CENTER)
+	Loading  adlist from %s . . .\t
+	""" % (argv[1]))
+			self.label.set_justify(Gtk.Justification.LEFT)
 			self.grid.attach(self.label, 1, 1, 1, 1)
 
-			self.button2 = Gtk.Button.new_with_label("Exit")
-			self.button2.connect("clicked", self.oncancelclicked)
-			self.grid.attach(self.button2, 1, 3, 1, 1)
+			self.progress = Gtk.ProgressBar.new()
+			self.progress.set_pulse_step(0.2)
+			self.grid.attach(self.progress, 1, 2, 1, 1)
 
-		def oncancelclicked(self,widget):
-			exit(0)
+			self.source_id = GLib.timeout_add(140, self.pulse)
 
+		def pulse(self):
+			self.progress.pulse()
+			return True
 
 
 def show_splash():
 	window = splash()
 	window.set_decorated(True)
 	window.set_resizable(False)
-	window.set_opacity(0.0)
 	window.set_position(Gtk.WindowPosition.CENTER)
 	window.show_all()
 	Gtk.main()
 	window.connect("delete-event", Gtk.main_quit)
 
-show_splash()
 
+show_splash()

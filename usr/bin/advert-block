@@ -14,6 +14,14 @@
 # then appends them to /etc/hosts so that
 # many online adverts are blocked from sight
 
+VERSION="4.0.0-drauger"
+if [ "$1" == "-v" ] || [ "$1" == "--version" ]; then
+    builtin echo -e "\nVERSION: $VERSION\n"
+    exit 0
+elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    builtin echo -e "\nadvert-block $VERSION\nJust run 'block-advert' with no options to configure your ad blocking.\n\t-v,--version\t\tPrint current version.\n\t-h, --help\t\tPrint this help dialog and exit.\n"
+    exit 0
+fi
 if [ "$EUID" != "0" ]; then
 	/usr/bin/pkexec /usr/bin/block-advert
 	exit $?
@@ -77,7 +85,7 @@ function append_adlist
 		/bin/cat /tmp/adlist-all >> /tmp/hosts-temp
 		builtin echo "$markerend"   >> /tmp/hosts-temp
 	else
-		yad --image="info" --title "$title" --text=$"Restoring original /etc/hosts."
+		/usr/share/advert-block/restore.py
         exit 1
 	fi
     # On first use backup original /etc/hosts to /etc/hosts.ORIGINAL
@@ -110,7 +118,11 @@ function wget_dialog
     # sed to delete the ending '%' sign
     # sed -u to flush the output of sed
     # changed -t 0 (tries) to -t 20
-    /usr/bin/wget -c -4 -t 20 -T 10 --progress=dot -O $2 "$1" 2>&1 | /usr/bin/awk '{print $7}; system("")' | /bin/sed -u 's/%//' | yad --title "$title" --progress --width $WIDTH --text=$"Loading  adlist from $domain" --percentage=0 --auto-close
+    /usr/share/advert-block/progress.py "$domain" &
+    proccess = "$!"
+    /usr/bin/wget -c -4 -t 20 -T 10 --progress=dot -O $2 "$1" 2>&1
+    kill "$process"
+
 }
 
 # download the ads lists
