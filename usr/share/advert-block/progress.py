@@ -55,9 +55,10 @@ def show_splash():
 	window.set_decorated(True)
 	window.set_resizable(False)
 	window.set_position(Gtk.WindowPosition.CENTER)
+	window.connect("delete-event", Gtk.main_quit)
 	window.show_all()
 	Gtk.main()
-	window.connect("delete-event", Gtk.main_quit)
+
 
 
 show_splash()

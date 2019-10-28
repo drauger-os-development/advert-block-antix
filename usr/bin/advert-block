@@ -19,11 +19,11 @@ if [ "$1" == "-v" ] || [ "$1" == "--version" ]; then
     builtin echo -e "\nVERSION: $VERSION\n"
     exit 0
 elif [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-    builtin echo -e "\nadvert-block $VERSION\nJust run 'block-advert' with no options to configure your ad blocking.\n\t-v,--version\t\tPrint current version.\n\t-h, --help\t\tPrint this help dialog and exit.\n"
+    builtin echo -e "\nadvert-block $VERSION\nJust run 'advert-block' with no options to configure your ad blocking.\n\t-v,--version\t\tPrint current version.\n\t-h, --help\t\tPrint this help dialog and exit.\n"
     exit 0
 fi
 if [ "$EUID" != "0" ]; then
-	/usr/bin/pkexec /usr/bin/block-advert
+	/usr/bin/pkexec /usr/bin/advert-block
 	exit $?
 fi
 TEXTDOMAINDIR=/usr/share/locale
@@ -119,9 +119,9 @@ function wget_dialog
     # sed -u to flush the output of sed
     # changed -t 0 (tries) to -t 20
     /usr/share/advert-block/progress.py "$domain" &
-    proccess = "$!"
+    proccess="$!"
     /usr/bin/wget -c -4 -t 20 -T 10 --progress=dot -O $2 "$1" 2>&1
-    kill "$process"
+    kill -9 "$process"
 
 }
 
@@ -189,7 +189,7 @@ function error_report
 	elif [[ "$2" -ge 2 ]]; then
 		type="error"
 	fi
-	builtin echo -e "\nAn $type has occured in function $3\n\tCalled As: $1\n\tError Code: $2\n\tError Message: $4" >> /tmp/advert-block-antix/block-advert.log
+	builtin echo -e "\nAn $type has occured in function $3\n\tCalled As: $1\n\tError Code: $2\n\tError Message: $4" >> /tmp/advert-block-antix/advert-block.log
 }
 
 #=======================================================================
@@ -200,7 +200,7 @@ function error_report
 #yad --title "$title" --width "$WIDTH" --image "question" --text "$info_text"
 confirm=$(/usr/share/advert-block/confirm.py 2>/dev/null)
 rsp=$?
-if [ $rsp != 1 ]; then
+if [ $rsp == 1 ]; then
     exit 1
 elif [ "$confirm" == "EXIT" ]; then
 	exit 1
@@ -219,7 +219,7 @@ fi
              #FALSE "UNBLOCK" )
 ans=$(/usr/share/advert-block/selection.py 2>/dev/null)
 rsp=$?
-if [ $rsp != 1 ]; then
+if [ $rsp == 1 ]; then
     exit 1
 elif [ "$ans" == "EXIT" ]; then
 	exit 1
