@@ -5,6 +5,9 @@ ARCH=$(cat DEBIAN/control | grep 'Architecture: '| sed 's/Architecture: //g')
 FOLDER="$PAK\_$VERSION\_$ARCH"
 FOLDER=$(echo "$FOLDER" | sed 's/\\//g')
 mkdir ../"$FOLDER"
+if [ ! -d "build" ]; then
+	mkdir build
+fi
 ##############################################################
 #							     #
 #							     #
@@ -42,29 +45,8 @@ fi
 if [ -d libx32 ]; then
 	cp -R libx32 ../"$FOLDER"/libx32
 fi
-if [ -d dev ]; then
-	cp -R dev ../"$FOLDER"/dev
-fi
-if [ -d home ]; then
-	cp -R home ../"$FOLDER"/home
-fi
-if [ -d proc ]; then
-	cp -R proc ../"$FOLDER"/proc
-fi
-if [ -d root ]; then
-	cp -R root ../"$FOLDER"/root
-fi
-if [ -d run ]; then
-	cp -R run ../"$FOLDER"/run
-fi
 if [ -d sbin ]; then
 	cp -R sbin ../"$FOLDER"/sbin
-fi
-if [ -d sys ]; then
-	cp -R sys ../"$FOLDER"/sys
-fi
-if [ -d tmp ]; then
-	cp -R tmp ../"$FOLDER"/tmp
 fi
 if [ -d var ]; then
 	cp -R var ../"$FOLDER"/var
@@ -76,9 +58,10 @@ if [ -d srv ]; then
 	cp -R srv ../"$FOLDER"/srv
 fi
 cp -R DEBIAN ../"$FOLDER"/DEBIAN
+base="$PWD"
 cd ..
 #DELETE STUFF HERE
-
 #build the shit
 dpkg-deb --build "$FOLDER"
 rm -rf "$FOLDER"
+cp "$FOLDER.deb" "$base/build"

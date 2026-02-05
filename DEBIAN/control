@@ -5,7 +5,7 @@ Maintainer: anticapitalista <anticapitalista@riseup.net>
 Version: 4.0.0-drauger
 Architecture: all
 Homepage: https://github.com/antiX-Linux/advert-block-antix
-Depends: wget, policykit-1, python3, bash, python-gtk2 (>=2.24.0-5.1ubuntu2)
+Depends: wget, policykit-1, python3, bash, gir1.2-gtk-3.0 (>=3.24.12-1ubuntu1)
 Description: Script and Desktop launcher for advert block, website add blocker.
  Script and Desktop launcher for advert block, website add blocker.
  Designed for antiX, forked for Drauger OS.
